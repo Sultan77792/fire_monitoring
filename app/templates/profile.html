@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="{{ lang.get('lang', 'ru') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ lang.profile }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CijB+PG4r7xJrjXJn3hTHhJ4usTRysA/bW4QbpQsa8eu0sPKaa/V1R1P2qsOj0S6iL0SZZG2QLY+V1UtQ==" crossorigin="anonymous"></script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <style>
+        .form-container { max-width: 600px; margin: 20px auto; }
+        #notifications { position: fixed; bottom: 10px; right: 10px; z-index: 1000; }
+        #totpQr { margin-top: 20px; text-align: center; }
+        .spinner { display: none; margin-left: 10px; }
+        @media (max-width: 768px) {
+            .form-container { max-width: 100%; padding: 0 10px; }
+            h2 { font-size: 1.5rem; }
+            .btn { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body class="bg-light" data-bs-theme="light">
+    <div class="container mt-4">
+        <h2>{{ lang.profile }}</h2>
+        <nav class="mb-3">
+            <button onclick="logout()" class="btn btn-outline-danger">{{ lang.logout }}</button>
+            <a href="/fires" class="btn btn-outline-primary">{{ lang.fires_title }}</a>
+            {% if user.role in ['admin', 'analyst'] %}
+                <a href="/analytics" class="btn btn-outline-info">{{ lang.analytics }}</a>
+                <a href="/summary" class="btn btn-outline-info">{{ lang.summary }}</a>
+            {% endif %}
+            {% if user.role == 'admin' %}
+                <a href="/users" class="btn btn-outline-info">{{ lang.users }}</a>
+                <a href="/logs" class="btn btn-outline-info">{{ lang.logs }}</a>
+            {% endif %}
+            <a href="?lang=ru" class="btn btn-outline-primary">Русский</a>
+            <a href="?lang=kk" class="btn btn-outline-primary">Қазақша</a>
+            <button class="btn btn-outline-secondary" onclick="toggleTheme()">{{ 'Темная тема' if lang.lang == 'ru' else 'Қараңғы тақырып' }}</button>
+        </nav>
+
+        <div class="form-container">
+            <form id="profileForm" novalidate>
+                <div class="mb-3">
+                    <label for="username" class="form-label">{{ lang.username }}</label>
+                    <input type="text" name="username" class="form-control" value="{{ user.username }}" disabled>
+                </div>
+                <div class="mb-3">
+                    <label for="role" class="form-label">{{ lang.role }}</label>
+                    <input type="text" name="role" class="form-control" value="{{ user.role }}" disabled>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">{{ lang.password }}</label>
+                    <input type="password" name="password" id="password" class="form-control" placeholder="{{ lang.new_password }}" aria-describedby="passwordHelp">
+                    <div id="passwordHelp" class="form-text">{{ lang.password_hint }}</div>
+                    <div class="invalid-feedback">{{ lang.invalid_password }}</div>
+                </div>
+                <div class="mb-3">
+                    <label for="region" class="form-label">{{ lang.region }}</label>
+                    <select name="region" class="form-select">
+                        <option value="">{{ lang.select_region }}</option>
+                        {% for region in regions %}
+                            <option value="{{ region }}" {% if region == user.region %}selected{% endif %}>{{ region }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-check mb-3">
+                    <input type="checkbox" name="totp_enable" class="form-check-input" id="totpEnable" {% if user.totp_secret %}checked disabled{% endif %} onchange="toggleTotp(this)">
+                    <label class="form-check-label" for="totpEnable">{{ lang.enable_2fa }}</label>
+                </div>
+                {% if user.totp_secret %}
+                    <div class="form-check mb-3" id="totpDisableContainer">
+                        <input type="checkbox" name="totp_disable" class="form-check-input" id="totpDisable">
+                        <label class="form-check-label" for="totpDisable">{{ lang.disable_2fa }}</label>
+                    </div>
+                {% endif %}
+                <button type="submit" class="btn btn-primary d-flex justify-content-center align-items-center">
+                    {{ lang.save }}
+                    <span class="spinner-border spinner-border-sm spinner" role="status" aria-hidden="true"></span>
+                </button>
+            </form>
+            <div id="totpQr"></div>
+        </div>
+    </div>
+
+    <div id="notifications"></div>
+
+    <script>
+        'use strict';
+
+        const socket = io();
+        const profileForm = document.getElementById('profileForm');
+        const submitButton = profileForm.querySelector('button[type="submit"]');
+        const spinner = submitButton.querySelector('.spinner');
+        const totpQr = document.getElementById('totpQr');
+        const lang = '{{ lang.lang }}';
+
+        function isStrongPassword(password) {
+            return password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password);
+        }
+
+        async function toggleTotp(checkbox) {
+            if (checkbox.checked && !'{{ user.totp_secret }}') {
+                try {
+                    const response = await fetch('/auth/totp/setup', { 
+                        method: 'POST', 
+                        credentials: 'include' 
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.detail || 'Failed to setup 2FA');
+                    totpQr.innerHTML = '';
+                    new QRCode(totpQr, {
+                        text: data.totp_uri,
+                        width: 128,
+                        height: 128
+                    });
+                    showNotification('info', lang === 'ru' ? 'Сканируйте QR-код в приложении аутентификатора' : 'QR-кодты аутентификатор қолданбасында сканерлеңіз');
+                } catch (error) {
+                    console.error('Error setting up 2FA:', error);
+                    checkbox.checked = false;
+                    showNotification('danger', lang === 'ru' ? `Ошибка настройки 2FA: ${error.message}` : `2FA орнату қатесі: ${error.message}`);
+                }
+            }
+        }
+
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = profileForm.querySelector('#password').value;
+            if (password && !isStrongPassword(password)) {
+                profileForm.classList.add('was-validated');
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            submitButton.disabled = true;
+            spinner.style.display = 'inline-block';
+
+            try {
+                const response = await fetch('/auth/profile', { 
+                    method: 'PUT', 
+                    body: formData, 
+                    credentials: 'include' 
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    if (response.status === 401) window.location.href = '/';
+                    throw new Error(data.detail || 'Network response was not ok');
+                }
+                if (data.totp_secret) {
+                    totpQr.innerHTML = '';
+                    new QRCode(totpQr, {
+                        text: data.totp_uri,
+                        width: 128,
+                        height: 128
+                    });
+                    document.getElementById('totpEnable').disabled = true;
+                    const disableDiv = document.createElement('div');
+                    disableDiv.className = 'form-check mb-3';
+                    disableDiv.id = 'totpDisableContainer';
+                    disableDiv.innerHTML = `
+                        <input type="checkbox" name="totp_disable" class="form-check-input" id="totpDisable">
+                        <label class="form-check-label" for="totpDisable">${lang.disable_2fa}</label>
+                    `;
+                    profileForm.insertBefore(disableDiv, submitButton.parentElement);
+                    showNotification('success', lang === 'ru' ? 'Двухфакторная аутентификация включена' : 'Екі факторлы аутентификация қосылды');
+                } else if (data.totp_disabled) {
+                    document.getElementById('totpEnable').disabled = false;
+                    document.getElementById('totpEnable').checked = false;
+                    document.getElementById('totpDisableContainer').remove();
+                    totpQr.innerHTML = '';
+                    showNotification('success', lang === 'ru' ? 'Двухфакторная аутентификация отключена' : 'Екі факторлы аутентификация өшірілді');
+                } else {
+                    showNotification('success', lang === 'ru' ? 'Профиль успешно обновлён' : 'Профиль сәтті жаңартылды');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showNotification('danger', lang === 'ru' ? `Ошибка обновления профиля: ${error.message}` : `Профильді жаңарту қатесі: ${error.message}`);
+            } finally {
+                submitButton.disabled = false;
+                spinner.style.display = 'none';
+            }
+        });
+
+        function showNotification(type, message) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show`;
+            notification.innerHTML = `${message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            document.getElementById('notifications').appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.dataset.bsTheme = body.dataset.bsTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', body.dataset.bsTheme);
+        }
+
+        async function logout() {
+            try {
+                await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const theme = localStorage.getItem('theme') || 'light';
+            document.body.dataset.bsTheme = theme;
+            if (!document.cookie.includes('token')) window.location.href = '/';
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(() => console.log('Service Worker registered'))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            }
+            profileForm.classList.add('needs-validation');
+        });
+
+        socket.on('new_fire', (data) => {
+            showNotification('info', data.message);
+        });
+    </script>
+</body>
+</html>

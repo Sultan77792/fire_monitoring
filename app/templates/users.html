@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="{{ lang.get('lang', 'ru') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ lang.users }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <style>
+        .table th, .table td { vertical-align: middle; }
+        .sortable { cursor: pointer; }
+        .sortable:hover { background-color: #e9ecef; }
+        #notifications { position: fixed; bottom: 10px; right: 10px; z-index: 1000; }
+        .spinner { display: none; margin-left: 10px; }
+        @media (max-width: 768px) {
+            .table { font-size: 14px; }
+            .btn-sm { font-size: 12px; padding: 4px 8px; }
+            h2, h3 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body class="bg-light" data-bs-theme="light">
+    <div class="container mt-4">
+        <h2>{{ lang.users }}</h2>
+        <nav class="mb-3">
+            <button onclick="logout()" class="btn btn-outline-danger">{{ lang.logout }}</button>
+            <a href="/fires" class="btn btn-outline-primary">{{ lang.fires_title }}</a>
+            <a href="/logs" class="btn btn-outline-info">{{ lang.logs }}</a>
+            <a href="/analytics" class="btn btn-outline-info">{{ lang.analytics }}</a>
+            <a href="/summary" class="btn btn-outline-info">{{ lang.summary }}</a>
+            <button id="exportCsv" class="btn btn-outline-success d-flex align-items-center">
+                {{ lang.export_csv }}
+                <span class="spinner-border spinner-border-sm spinner ms-2" role="status" aria-hidden="true"></span>
+            </button>
+            <a href="?lang=ru" class="btn btn-outline-primary">Русский</a>
+            <a href="?lang=kk" class="btn btn-outline-primary">Қазақша</a>
+            <button class="btn btn-outline-secondary" onclick="toggleTheme()">{{ 'Темная тема' if lang.lang == 'ru' else 'Қараңғы тақырып' }}</button>
+        </nav>
+
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th class="sortable" data-key="username">{{ lang.username }}</th>
+                        <th class="sortable" data-key="role">{{ lang.role }}</th>
+                        <th class="sortable" data-key="region">{{ lang.region }}</th>
+                        <th>{{ 'Действия' if lang.lang == 'ru' else 'Әрекеттер' }}</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTable"></tbody>
+            </table>
+        </div>
+
+        <h3 class="mt-4">{{ lang.add_user }}</h3>
+        <form id="addUserForm" novalidate>
+            <div class="mb-3">
+                <input type="text" name="username" class="form-control" placeholder="{{ lang.username }}" required>
+                <div class="invalid-feedback">{{ lang.required_field }}</div>
+            </div>
+            <div class="mb-3">
+                <input type="password" name="password" id="password" class="form-control" placeholder="{{ lang.password }}" required aria-describedby="passwordHelp">
+                <div id="passwordHelp" class="form-text">{{ lang.password_hint }}</div>
+                <div class="invalid-feedback">{{ lang.invalid_password }}</div>
+            </div>
+            <div class="mb-3">
+                <select name="role" class="form-select" required>
+                    <option value="">{{ lang.role }}</option>
+                    <option value="admin">{{ 'Администратор' if lang.lang == 'ru' else 'Әкімші' }}</option>
+                    <option value="engineer">{{ 'Инженер' if lang.lang == 'ru' else 'Инженер' }}</option>
+                    <option value="analyst">{{ 'Аналитик' if lang.lang == 'ru' else 'Талдаушы' }}</option>
+                    <option value="operator">{{ 'Оператор' if lang.lang == 'ru' else 'Оператор' }}</option>
+                </select>
+                <div class="invalid-feedback">{{ lang.required_field }}</div>
+            </div>
+            <div class="mb-3">
+                <select name="region" class="form-select">
+                    <option value="">{{ lang.region }}</option>
+                    {% for region in regions %}
+                        <option value="{{ region }}">{{ region }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary d-flex justify-content-center align-items-center">
+                {{ lang.add_user }}
+                <span class="spinner-border spinner-border-sm spinner" role="status" aria-hidden="true"></span>
+            </button>
+        </form>
+    </div>
+
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">{{ lang.edit }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editUserForm" novalidate>
+                    <div class="modal-body">
+                        <input type="hidden" name="id">
+                        <div class="mb-3">
+                            <input type="text" name="username" class="form-control" placeholder="{{ lang.username }}" required>
+                            <div class="invalid-feedback">{{ lang.required_field }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <input type="password" name="password" id="editPassword" class="form-control" placeholder="{{ lang.password }} ({{ 'оставьте пустым, чтобы не менять' if lang.lang == 'ru' else 'өзгертпеу үшін бос қалдырыңыз' }})" aria-describedby="editPasswordHelp">
+                            <div id="editPasswordHelp" class="form-text">{{ lang.password_hint }}</div>
+                            <div class="invalid-feedback">{{ lang.invalid_password }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <select name="role" class="form-select" required>
+                                <option value="">{{ lang.role }}</option>
+                                <option value="admin">{{ 'Администратор' if lang.lang == 'ru' else 'Әкімші' }}</option>
+                                <option value="engineer">{{ 'Инженер' if lang.lang == 'ru' else 'Инженер' }}</option>
+                                <option value="analyst">{{ 'Аналитик' if lang.lang == 'ru' else 'Талдаушы' }}</option>
+                                <option value="operator">{{ 'Оператор' if lang.lang == 'ru' else 'Оператор' }}</option>
+                            </select>
+                            <div class="invalid-feedback">{{ lang.required_field }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <select name="region" class="form-select">
+                                <option value="">{{ lang.region }}</option>
+                                {% for region in regions %}
+                                    <option value="{{ region }}">{{ region }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Закрыть' if lang.lang == 'ru' else 'Жабу' }}</button>
+                        <button type="submit" class="btn btn-primary d-flex justify-content-center align-items-center">
+                            {{ 'Сохранить' if lang.lang == 'ru' else 'Сақтау' }}
+                            <span class="spinner-border spinner-border-sm spinner" role="status" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="notifications"></div>
+
+    <script>
+        'use strict';
+
+        const socket = io();
+        let usersData = [];
+        const lang = '{{ lang.lang }}';
+
+        function isStrongPassword(password) {
+            return password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password);
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await fetch('/users', { credentials: 'include' });
+                if (!response.ok) {
+                    if (response.status === 401) window.location.href = '/';
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Network response was not ok');
+                }
+                const result = await response.json();
+                usersData = result;
+                renderTable(usersData);
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showNotification('danger', lang === 'ru' ? `Ошибка загрузки пользователей: ${error.message}` : `Пайдаланушыларды жүктеу қатесі: ${error.message}`);
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('usersTable');
+            tbody.innerHTML = '';
+            data.forEach(user => {
+                const row = `<tr>
+                    <td>${user.id}</td>
+                    <td>${user.username}</td>
+                    <td>${user.role}</td>
+                    <td>${user.region || ''}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="editUser(${user.id})">{{ lang.edit }}</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})" ${user.id === {{ request.user['user_id'] }} ? 'disabled' : ''}>{{ lang.delete }}</button>
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = e.target.querySelector('#password').value;
+            if (!e.target.checkValidity() || (password && !isStrongPassword(password))) {
+                e.target.classList.add('was-validated');
+                return;
+            }
+            const formData = new FormData(e.target);
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            const spinner = submitButton.querySelector('.spinner');
+            submitButton.disabled = true;
+            spinner.style.display = 'inline-block';
+            try {
+                const response = await fetch('/users', { method: 'POST', body: formData, credentials: 'include' });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.detail || 'Network response was not ok');
+                loadUsers();
+                e.target.reset();
+                showNotification('success', lang === 'ru' ? 'Пользователь успешно добавлен' : 'Пайдаланушы сәтті қосылды');
+            } catch (error) {
+                console.error('Error adding user:', error);
+                showNotification('danger', lang === 'ru' ? `Ошибка добавления пользователя: ${error.message}` : `Пайдаланушыны қосу қатесі: ${error.message}`);
+            } finally {
+                submitButton.disabled = false;
+                spinner.style.display = 'none';
+            }
+        });
+
+        function editUser(id) {
+            const user = usersData.find(u => u.id === id);
+            const form = document.getElementById('editUserForm');
+            form.querySelector('[name="id"]').value = user.id;
+            form.querySelector('[name="username"]').value = user.username;
+            form.querySelector('[name="password"]').value = '';
+            form.querySelector('[name="role"]').value = user.role;
+            form.querySelector('[name="region"]').value = user.region || '';
+            const modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+        }
+
+        document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = e.target.querySelector('#editPassword').value;
+            if (!e.target.checkValidity() || (password && !isStrongPassword(password))) {
+                e.target.classList.add('was-validated');
+                return;
+            }
+            const formData = new FormData(e.target);
+            const id = formData.get('id');
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            const spinner = submitButton.querySelector('.spinner');
+            submitButton.disabled = true;
+            spinner.style.display = 'inline-block';
+            try {
+                const response = await fetch(`/users/${id}`, { method: 'PUT', body: formData, credentials: 'include' });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.detail || 'Network response was not ok');
+                loadUsers();
+                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                showNotification('success', lang === 'ru' ? 'Пользователь успешно отредактирован' : 'Пайдаланушы сәтті өңделді');
+            } catch (error) {
+                console.error('Error editing user:', error);
+                showNotification('danger', lang === 'ru' ? `Ошибка редактирования пользователя: ${error.message}` : `Пайдаланушыны өңдеу қатесі: ${error.message}`);
+            } finally {
+                submitButton.disabled = false;
+                spinner.style.display = 'none';
+            }
+        });
+
+        async function deleteUser(id) {
+            if (confirm(lang === 'ru' ? 'Удалить пользователя?' : 'Пайдаланушыны жою керек пе?')) {
+                try {
+                    const response = await fetch(`/users/${id}`, { method: 'DELETE', credentials: 'include' });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || 'Delete failed');
+                    }
+                    loadUsers();
+                    showNotification('success', lang === 'ru' ? 'Пользователь успешно удалён' : 'Пайдаланушы сәтті жойылды');
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                    showNotification('danger', lang === 'ru' ? `Ошибка удаления пользователя: ${error.message}` : `Пайдаланушыны жою қатесі: ${error.message}`);
+                }
+            }
+        }
+
+        async function exportUsers() {
+            const exportButton = document.getElementById('exportCsv');
+            const spinner = exportButton.querySelector('.spinner');
+            spinner.style.display = 'inline-block';
+            try {
+                const response = await fetch('/users/export', { credentials: 'include' });
+                if (!response.ok) {
+                    if (response.status === 401) window.location.href = '/';
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Export failed');
+                }
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = response.headers.get('Content-Disposition').split('filename=')[1];
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                showNotification('success', lang === 'ru' ? 'Данные успешно экспортированы' : 'Деректер сәтті экспортталды');
+            } catch (error) {
+                console.error('Error exporting users:', error);
+                showNotification('danger', lang === 'ru' ? `Ошибка экспорта: ${error.message}` : `Экспорт қатесі: ${error.message}`);
+            } finally {
+                spinner.style.display = 'none';
+            }
+        }
+
+        function showNotification(type, message) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show`;
+            notification.innerHTML = `${message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            document.getElementById('notifications').appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const key = th.dataset.key;
+                const order = th.dataset.order = th.dataset.order === 'asc' ? 'desc' : 'asc';
+                usersData.sort((a, b) => {
+                    const valA = a[key] || '';
+                    const valB = b[key] || '';
+                    return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                });
+                renderTable(usersData);
+            });
+        });
+
+        function toggleTheme() {
+            const body = document.body;
+            body.dataset.bsTheme = body.dataset.bsTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', body.dataset.bsTheme);
+        }
+
+        async function logout() {
+            try {
+                await fetch('/logout', { method: 'POST', credentials: 'include' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const theme = localStorage.getItem('theme') || 'light';
+            document.body.dataset.bsTheme = theme;
+            if (!document.cookie.includes('token')) window.location.href = '/';
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(() => console.log('Service Worker registered'))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            }
+            document.getElementById('addUserForm').classList.add('needs-validation');
+            document.getElementById('editUserForm').classList.add('needs-validation');
+            document.getElementById('exportCsv').addEventListener('click', exportUsers);
+            loadUsers();
+        });
+    </script>
+</body>
+</html>

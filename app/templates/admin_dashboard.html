@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Все пожары</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+	<style>
+        body {
+            background-image: url("{{ url_for('static', filename='images/forest.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        button, a.btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        button:hover, a.btn:hover {
+            background-color: #45a049;
+        }
+        form {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>База данных лесных пожаров РК</h1>
+	{% include 'navbar.html' %}
+    <h2>Все пожары</h2>
+    <table id="fires-table" border="1">
+        <thead>
+            <tr>
+                <th>ID пожара</th>
+                <th>Дата пожара</th>
+                <th>Регион</th>
+                <th>КГУ/ООПТ</th>
+                <th>Филиал</th>
+                <th>Лесничество</th>
+                <th>Квартал</th>
+                <th>Выдел</th>
+                <th>Площадь пожара</th>
+                <th>Площадь лесная</th>
+                <th>Площадь лесная лесопокрытая</th>
+                <th>Площадь верховой</th>
+                <th>Площадь не лесная</th>
+                <th>Лесная охрана задействована</th>
+                <th>Кол-во людей Лесной охраны</th>
+                <th>Кол-во техники Лесной охраны</th>
+                <th>АПС задействовано</th>
+                <th>Кол-во людей АПС</th>
+                <th>Кол-во техники АПС</th>
+                <th>Кол-во воздушных судов АПС</th>
+                <th>МЧС задействовано</th>
+                <th>Кол-во людей МЧС</th>
+                <th>Кол-во техники МЧС</th>
+                <th>Кол-во воздушных судов МЧС</th>
+                <th>МИО задействовано</th>
+                <th>Кол-во людей МИО</th>
+                <th>Кол-во техники МИО</th>
+                <th>Кол-во воздушных судов МИО</th>
+                <th>Др.организации задействованы</th>
+                <th>Кол-во людей др.организаций</th>
+                <th>Кол-во техники др.организаций</th>
+                <th>Кол-во воздушных судов др.организаций</th>
+                <th>Описание</th>
+                <th>Ущерб (тенге)</th>
+                <th>Затраты на тушение</th>
+                <th>КПО</th>
+                <th>Приложение</th>
+                {% if current_role != 'analyst' %}
+                <th>Действия</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for fire in fires %}
+            <tr>
+				<td>{{ fire.id }}
+                <td>{{ fire.date }}
+				</td>
+				<td>{{ translate_value(fire.region) }}</td>
+                <td>{{ translate_value(fire.location) }}</td>
+				<td>{{ translate_value(fire.branch) }}</td>
+				<td>{{ translate_value(fire.forestry) }}</td>
+				<td>{{ translate_value(fire.quarter) }}</td>
+				<td>{{ translate_value(fire.allotment) }}</td>
+                <td>{{ translate_value(fire.damage_area) }}</td>
+                <td>{{ translate_value(fire.damage_les) }}</td>
+				<td>{{ translate_value(fire.damage_les_lesopokryt) }}</td>
+				<td>{{ translate_value(fire.damage_les_verh) }}</td>
+				<td>{{ translate_value(fire.damage_not_les) }}</td>
+				<td>{{ translate_value(fire.LO_flag) }}</td>
+				<td>{{ translate_value(fire.LO_people_count) }}</td>
+				<td>{{ translate_value(fire.LO_equipment_count) }}</td>
+				<td>{{ translate_value(fire.APS_flag) }}</td>
+				<td>{{ translate_value(fire.APS_people_count) }}</td>
+				<td>{{ translate_value(fire.APS_equipment_count) }}</td>
+				<td>{{ translate_value(fire.APS_aircraft_count) }}</td>
+				<td>{{ translate_value(fire.KPS_flag) }}</td>
+				<td>{{ translate_value(fire.KPS_people_count) }}</td>
+				<td>{{ translate_value(fire.KPS_tecnic_count) }}</td>
+				<td>{{ translate_value(fire.KPS_aircraft_count) }}</td>
+				<td>{{ translate_value(fire.MIO_flag) }}</td>
+				<td>{{ translate_value(fire.MIO_people_count) }}</td>
+				<td>{{ translate_value(fire.MIO_tecnic_count) }}</td>
+				<td>{{ translate_value(fire.MIO_aircraft_count) }}</td>
+				<td>{{ translate_value(fire.other_org_flag) }}</td>
+				<td>{{ translate_value(fire.other_org_people_count) }}</td>
+				<td>{{ translate_value(fire.other_org_tecnic_count) }}</td>
+				<td>{{ translate_value(fire.other_org_aircraft_count) }}</td>
+                <td>{{ translate_value(fire.description) }}</td>
+				<td>{{ translate_value(fire.damage_tenge) }}</td>
+				<td>{{ translate_value(fire.firefighting_costs) }}</td>
+				<td>{{ translate_value(fire.KPO) }}</td>
+				<td>
+					{% if fire.file_path %}
+					<a href="{{ url_for('download_file', filename=fire.file_path) }}" target="_blank">Скачать</a>
+					{% else %}
+					Нет файла
+					{% endif %}
+				</td>
+				{% if current_role != 'analyst' %}
+				<td>
+					<a href="{{ url_for('edit_fire', fire_id=fire.id) }}">Редактировать</a>
+					{% if current_user.roles == 'admin' %}
+					<form action="{{ url_for('delete_fire', fire_id=fire.id) }}" method="post" style="display:inline;">
+						<button type="submit" onclick="return confirm('Вы уверены, что хотите удалить эту запись?');">Удалить</button>
+					</form>
+					{% endif %}
+					
+				</td>
+				{% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+	{% if current_role == 'admin' %}
+	<h2>Журнал событий</h2>
+	<table id="audit-log-table" border="2">
+		<thead>
+			<tr>
+				<th>Время</th>
+				<th>Пользователь</th>
+				<th>Действие</th>
+				<th>Таблица</th>
+				<th>ID записи</th>
+				<th>Изменения</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for log in audit_logs %}
+			<tr>
+				<td>{{ log.timestamp }}</td>
+				<td>{{ log.username }}</td>
+				<td>{{ log.action }}</td>
+				<td>{{ log.table_name }}</td>
+				<td>{{ log.record_id }}</td>
+				<td>{{ translate_changes(log.changes) }}</td>
+			</tr>
+			{% endfor %}
+
+		</tbody>
+	</table>
+	<a href="{{ url_for('export_audit') }}" class="btn btn-primary">Экспорт журнала событий</a>
+	{% endif %}
+	
+    <a href="{{ url_for('logout') }}">Logout</a>
+	<script>
+        $(document).ready(function () {
+            $('#fires-table').DataTable({
+                order: [[1, 'desc']],
+                paging: true,
+                searching: true,
+                language: {
+					search: "Поиск:",
+					lengthMenu: "Показать _MENU_ записей",
+					info: "Показано с _START_ по _END_ из _TOTAL_ записей",
+					infoEmpty: "Нет доступных записей",
+					infoFiltered: "(отфильтровано из _MAX_ записей)",
+					zeroRecords: "Записи не найдены",
+					paginate: {
+						first: "Первый",
+						last: "Последний",
+						next: "Следующий",
+						previous: "Предыдущий"
+					},
+				}
+            });
+
+            $('#audit-log-table').DataTable({
+				order: [[0, 'desc']], // Сортировка по первой колонке (время) в порядке убывания
+				paging: true, // Пагинация
+				lengthMenu: [5, 10, 25, 50, 100], // Выбор количества строк
+				searching: true, // Поиск
+				pageLength: 10, // Количество строк по умолчанию
+				language: {
+					search: "Поиск:",
+					lengthMenu: "Показать _MENU_ записей",
+					info: "Показано с _START_ по _END_ из _TOTAL_ записей",
+					infoEmpty: "Нет доступных записей",
+					infoFiltered: "(отфильтровано из _MAX_ записей)",
+					zeroRecords: "Записи не найдены",
+					paginate: {
+						first: "Первый",
+						last: "Последний",
+						next: "Следующий",
+						previous: "Предыдущий"
+					},
+				}
+            });
+        });
+    </script>
+</body>
+</html>

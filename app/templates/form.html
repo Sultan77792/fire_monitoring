@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Форма добавления данных о пожаре</title>
+    <style>
+        body {
+            background-image: url("{{ url_for('static', filename='images/forest.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        form {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: auto;
+            margin-top: 100px;
+        }
+        h1 {
+            text-align: center;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+		.hidden {
+            display: none;
+        }
+    </style>
+	<script>
+        
+        function toggleFields() {
+			var loCheckbox = document.getElementById('lo_flag');
+            var apsCheckbox = document.getElementById('aps_flag');
+            var kpsCheckbox = document.getElementById('kps_flag');
+            var mioCheckbox = document.getElementById('mio_flag');
+            var otherOrgCheckbox = document.getElementById('other_org_flag');
+
+            var loFields = document.getElementById('lo_fields');
+			var apsFields = document.getElementById('aps_fields');
+            var kpsFields = document.getElementById('kps_fields');
+            var mioFields = document.getElementById('mio_fields');
+            var otherOrgFields = document.getElementById('other_org_fields');
+			
+			loFields.classList.toggle('hidden', !loCheckbox.checked);
+            apsFields.classList.toggle('hidden', !apsCheckbox.checked);
+            kpsFields.classList.toggle('hidden', !kpsCheckbox.checked);
+            mioFields.classList.toggle('hidden', !mioCheckbox.checked);
+            otherOrgFields.classList.toggle('hidden', !otherOrgCheckbox.checked);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleFields();
+        });
+    </script>
+	<script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const regionsAndLocations = {{ regions_and_locations|tojson }};
+            const regionSelect = document.getElementById("region");
+            const locationSelect = document.getElementById("location");
+
+            
+            if (regionSelect.hasAttribute("readonly")) {
+                const selectedRegion = regionSelect.value;
+                updateLocations(selectedRegion);
+            }
+
+            
+            function updateLocations(region) {
+                const locations = regionsAndLocations[region] || [];
+                locationSelect.innerHTML = ""; 
+                locations.forEach(location => {
+                    const option = document.createElement("option");
+                    option.value = location;
+                    option.textContent = location;
+                    locationSelect.appendChild(option);
+                });
+            }
+
+            
+            regionSelect.addEventListener("change", function () {
+                updateLocations(regionSelect.value);
+            });
+        });
+    </script>
+
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <h1>Добавить пожар</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.date.label }} Дата пожара
+            {{ form.date(type="date", value=form.date.data.strftime('%Y-%m-%d') if form.date.data else '') }}{% if form.date.errors %}<span class="text-danger">{{ form.date.errors[0] }}</span>{% endif %}
+        </div>
+        <div>
+            {{ form.region.label }}<br>
+            {{ form.region(class="form-control") }}
+        </div>
+        <div>
+            <label for="location">КГУ/ООПТ</label> 
+            {{ form.location(class="form-control") }}
+        </div>
+		<div>
+			{{ form.branch.label }} {{ form.branch() }}
+		</div>
+		<div>
+			{{ form.forestry.label }} {{ form.forestry() }}
+		</div>
+		<div>
+			{{ form.quarter.label }} {{ form.quarter() }}
+		</div>
+		<div>
+			{{ form.allotment.label }} {{ form.allotment() }}
+		</div>
+        <div>
+            <label for="damage_area">Площадь пожара (га)</label> 
+            {{ form.damage_area() }}{% if form.damage_area.errors %}<span class="text-danger">{{ form.damage_area.errors[0] }}</span>{% endif %}
+        </div>
+        <div>
+            <label for="damage_les">Из них площадь пожара в лесной зоне(га)</label> 
+            {{ form.damage_les() }}{% if form.damage_les.errors %}<span class="text-danger">{{ form.damage_les.errors[0] }}</span>{% endif %}
+        </div>
+		<div>
+            <label for="damage_les_lesopokryt">Из них площадь пожара в лесной лесопокрытой зоне(га)</label>  
+            {{ form.damage_les_lesopokryt() }}{% if form.damage_les_lesopokryt.errors %}<span class="text-danger">{{ form.damage_les_lesopokryt.errors[0] }}</span>{% endif %}
+        </div>
+        <div>
+            <label for="damage_les_verh">Из них площадь пожара верхового (га)</label>    
+            {{ form.damage_les_verh() }}{% if form.damage_les_verh.errors %}<span class="text-danger">{{ form.damage_les_verh.errors[0] }}</span>{% endif %}
+        </div>
+        <div>
+            <label for="damage_not_les">Из них площадь пожара нелесная (га)</label>    
+            {{ form.damage_not_les() }}{% if form.damage_not_les.errors %}<span class="text-danger">{{ form.damage_not_les.errors[0] }}</span>{% endif %}
+        </div>
+        
+		
+		<div>
+            {{ form.LO_flag.label }} 
+            {{ form.LO_flag(id='lo_flag', onchange="toggleFields('lo_flag', 'lo_fields')") }}
+        </div>
+		
+		<div id="lo_fields" class="hidden">
+            <div>
+                {{ form.LO_people_count.label }}  
+                {{ form.LO_people_count() }}
+            </div>
+            <div>
+                {{ form.LO_tecnic_count.label }}  
+                {{ form.LO_tecnic_count() }}
+            </div>
+        </div>
+
+        
+        <div>
+            {{ form.APS_flag.label }} 
+            {{ form.APS_flag(id='aps_flag', onchange="toggleFields('aps_flag', 'aps_fields')") }}
+        </div>
+		
+        <div id="aps_fields" class="hidden">
+            <div>
+                {{ form.APS_people_count.label }}  
+                {{ form.APS_people_count() }}
+            </div>
+            <div>
+                {{ form.APS_tecnic_count.label }}  
+                {{ form.APS_tecnic_count() }}
+            </div>
+            <div>
+                {{ form.APS_aircraft_count.label }}  
+                {{ form.APS_aircraft_count() }}
+            </div>
+        </div>
+
+		
+        <div>
+            {{ form.KPS_flag.label }} 
+            {{ form.KPS_flag(id='kps_flag', onchange='toggleFields()') }}
+        </div>
+
+        
+        <div id="kps_fields" class="hidden">
+            <div>
+                {{ form.KPS_people_count.label }}  
+                {{ form.KPS_people_count() }}
+            </div>
+            <div>
+                {{ form.KPS_tecnic_count.label }}  
+                {{ form.KPS_tecnic_count() }}
+            </div>
+            <div>
+                {{ form.KPS_aircraft_count.label }}  
+                {{ form.KPS_aircraft_count() }}
+            </div>
+        </div>
+
+        
+        <div>
+            {{ form.MIO_flag.label }} 
+            {{ form.MIO_flag(id='mio_flag', onchange='toggleFields()') }}
+        </div>
+
+        
+        <div id="mio_fields" class="hidden">
+            <div>
+                {{ form.MIO_people_count.label }}  
+                {{ form.MIO_people_count() }}
+            </div>
+            <div>
+                {{ form.MIO_tecnic_count.label }}  
+                {{ form.MIO_tecnic_count() }}
+            </div>
+            <div>
+                {{ form.MIO_aircraft_count.label }}  
+                {{ form.MIO_aircraft_count() }}
+            </div>
+        </div>
+
+        
+        <div>
+            {{ form.other_org_flag.label }} 
+            {{ form.other_org_flag(id='other_org_flag', onchange='toggleFields()') }}
+        </div>
+
+        
+        <div id="other_org_fields" class="hidden">
+            <div>
+                {{ form.other_org_people_count.label }}  
+                {{ form.other_org_people_count() }}
+            </div>
+            <div>
+                {{ form.other_org_tecnic_count.label }}  
+                {{ form.other_org_tecnic_count() }}
+            </div>
+            <div>
+                {{ form.other_org_aircraft_count.label }}  
+                {{ form.other_org_aircraft_count() }}
+            </div>
+        </div>
+
+		
+        <div>
+            <label for="region">Описание</label>  
+            {{ form.description() }}{% if form.description.errors %}<span class="text-danger">{{ form.description.errors[0] }}</span>{% endif %}
+        </div>
+		<div>
+			{{ form.damage_tenge.label }} {{ form.damage_tenge() }}
+		</div>
+		<div>
+			{{ form.firefighting_costs.label }} {{ form.firefighting_costs() }}
+		</div>
+		<div>
+			{{ form.KPO.label }} {{ form.KPO() }}
+		</div>
+        <div>
+            <label for="region">Загрузить файл</label>  
+            {{ form.file() }}{% if form.file.errors %}<span class="text-danger">{{ form.file.errors[0] }}</span>{% endif %}
+        </div>
+        <div>
+            <button type="submit">{{ form.submit() }}</button>
+        </div>
+    </form>
+	{% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    {% if form.errors %}
+    <div class="alert alert-danger">
+        <ul>
+            {% for field, errors in form.errors.items() %}
+                {% for error in errors %}
+                    <li>{{ field }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</body>
+</html>

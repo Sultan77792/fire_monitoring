@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Экспорт данных</title>
+    <style>
+        body {
+            background-image: url("{{ url_for('static', filename='images/forest.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+			background-attachment: fixed;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        form {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: auto;
+            margin-top: 100px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Экспорт данных</h1>
+	{% include 'navbar.html' %}
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.start_date.label }} Начальная дата
+            {{ form.start_date() }}
+        </div>
+        <div>
+            {{ form.end_date.label }} Конечная дата
+            {{ form.end_date() }}
+        </div>
+        <div>
+            <button type="submit">{{ form.submit() }}</button>
+        </div>
+    </form>
+
+    {% if fires %}
+    <h2>Filtered Fire Incidents</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Region</th>
+                <th>Location</th>
+                <th>Damage_area</th>
+                <th>Damage_les</th>
+				<th>Damage_les_lesopokryt</th>
+				<th>Damage_les_verh</th>
+				<th>Damage_not_les</th>
+				<th>APS_flag</th>
+				<th>APS_people_count</th>
+				<th>APS_tecnic_count</th>
+				<th>APS_aircraft_count</th>
+				<th>KPS_flag</th>
+				<th>KPS_people_count</th>
+				<th>KPS_tecnic_count</th>
+				<th>KPS_aircraft_count</th>
+				<th>MIO_flag</th>
+				<th>MIO_people_count</th>
+				<th>MIO_tecnic_count</th>
+				<th>MIO_aircraft_count</th>
+				<th>other_org_flag</th>
+				<th>other_org_people_count</th>
+				<th>other_org_tecnic_count</th>
+				<th>other_org_aircraft_count</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fire in fires %}
+            <tr>
+                <td>{{ fire.date }}</td>
+                <td>{{ fire.region }}</td>
+                <td>{{ fire.location }}</td>
+                <td>{{ fire.damage_area }}</td>
+                <td>{{ fire.damage_les }}</td>
+				<td>{{ fire.damage_les_lesopokryt }}</td>
+				<td>{{ fire.damage_les_verh }}</td>
+				<td>{{ fire.damage_not_les }}</td>
+				<td>{{ fire.APS_flag }}</td>
+				<td>{{ fire.APS_people_count }}</td>
+				<td>{{ fire.APS_tecnic_count }}</td>
+				<td>{{ fire.APS_aircraft_count }}</td>
+				<td>{{ fire.KPS_flag }}</td>
+				<td>{{ fire.KPS_people_count }}</td>
+				<td>{{ fire.KPS_tecnic_count }}</td>
+				<td>{{ fire.KPS_aircraft_count }}</td>
+				<td>{{ fire.MIO_flag }}</td>
+				<td>{{ fire.MIO_people_count }}</td>
+				<td>{{ fire.MIO_tecnic_count }}</td>
+				<td>{{ fire.MIO_aircraft_count }}</td>
+				<td>{{ fire.other_org_flag }}</td>
+				<td>{{ fire.other_org_people_count }}</td>
+				<td>{{ fire.other_org_tecnic_count }}</td>
+				<td>{{ fire.other_org_aircraft_count }}</td>
+                <td>{{ fire.description }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('dashboard') }}">РДС МЭПР</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">Аналитика</a>
+            </li>
+            
+            
+            {% if current_user.is_authenticated and (current_user.roles == 'admin' or current_user.roles == 'engineer' or current_user.roles == 'analyst') %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">Таблица</a>
+            </li>
+            {% endif %}
+            
+            
+            {% if current_user.is_authenticated and (current_user.roles == 'admin' or current_user.roles == 'engineer' or current_user.roles == 'operator') %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'form_page' %}active{% endif %}" href="{{ url_for('form_page') }}">Форма</a>
+            </li>
+            {% endif %}
+
+            
+            {% if current_user.is_authenticated and current_user.roles == 'admin' or current_user.roles == 'analyst' %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'export' %}active{% endif %}" href="{{ url_for('export') }}">Экспорт</a>
+            </li>
+            {% endif %}
+			
+			{% if current_user.is_authenticated and current_user.roles == 'admin' or current_user.roles == 'analyst' %}
+			<li><a href="{{ url_for('summary') }}">Сводная информация</a></li>
+			{% endif %}
+
+            
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('logout') }}">Выйти</a>
+            </li>
+        </ul>
+    </div>
+</nav>

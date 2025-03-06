@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="{{ lang.get('lang', 'ru') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ lang.login_title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .spinner { display: none; margin-left: 10px; }
+        .totp-container { display: none; margin-top: 15px; }
+        @media (max-width: 576px) {
+            .login-container { padding: 10px; }
+            h2 { font-size: 1.5rem; }
+            .btn { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body class="bg-light" data-bs-theme="light">
+    <div class="container mt-5">
+        <div class="login-container">
+            <h2 class="text-center mb-4">{{ lang.login_title }}</h2>
+            <div class="text-center mb-3">
+                <a href="?lang=ru" class="btn btn-outline-primary">Русский</a>
+                <a href="?lang=kk" class="btn btn-outline-primary">Қазақша</a>
+                <button class="btn btn-outline-secondary" onclick="toggleTheme()">{{ 'Темная тема' if lang.lang == 'ru' else 'Қараңғы тақырып' }}</button>
+            </div>
+            <form id="loginForm" novalidate>
+                <div class="mb-3">
+                    <label for="username" class="form-label">{{ lang.username }}</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="{{ lang.username }}" required aria-label="{{ lang.username }}">
+                    <div class="invalid-feedback">{{ lang.required_field }}</div>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">{{ lang.password }}</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="{{ lang.password }}" required aria-label="{{ lang.password }}">
+                    <div class="invalid-feedback">{{ lang.required_field }}</div>
+                </div>
+                <div class="mb-3 totp-container" id="totpContainer">
+                    <label for="totp" class="form-label">{{ lang.totp_code }}</label>
+                    <input type="text" id="totp" name="totp" class="form-control" placeholder="{{ lang.totp_code }}" maxlength="6" pattern="[0-9]{6}" aria-label="{{ lang.totp_code }}">
+                    <div class="invalid-feedback">{{ lang.invalid_totp }}</div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 d-flex justify-content-center align-items-center">
+                    {{ lang.login }}
+                    <span class="spinner-border spinner-border-sm spinner" role="status" aria-hidden="true"></span>
+                </button>
+            </form>
+            <p id="error" class="text-danger text-center mt-3"></p>
+        </div>
+    </div>
+
+    <script>
+        'use strict';
+
+        const loginForm = document.getElementById('loginForm');
+        const errorDiv = document.getElementById('error');
+        const submitButton = loginForm.querySelector('button[type="submit"]');
+        const spinner = submitButton.querySelector('.spinner');
+        const totpContainer = document.getElementById('totpContainer');
+        const lang = '{{ lang.lang }}';
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!loginForm.checkValidity()) {
+                e.stopPropagation();
+                loginForm.classList.add('was-validated');
+                return;
+            }
+
+            const formData = new FormData(loginForm);
+            errorDiv.textContent = '';
+            submitButton.disabled = true;
+            spinner.style.display = 'inline-block';
+
+            try {
+                const response = await fetch('/auth/token', { 
+                    method: 'POST', 
+                    body: formData,
+                    credentials: 'include' 
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    window.location.href = '/fires';
+                } else if (result['2fa_required']) {
+                    totpContainer.style.display = 'block';
+                    errorDiv.textContent = lang === 'ru' ? 'Введите код двухфакторной аутентификации' : 'Екі факторлы аутентификация кодын енгізіңіз';
+                } else {
+                    errorDiv.textContent = result.detail || (lang === 'ru' ? 'Ошибка входа' : 'Кіру қатесі');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorDiv.textContent = lang === 'ru' ? 'Ошибка сервера' : 'Сервер қатесі';
+            } finally {
+                submitButton.disabled = false;
+                spinner.style.display = 'none';
+            }
+        });
+
+        function toggleTheme() {
+            const body = document.body;
+            body.dataset.bsTheme = body.dataset.bsTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', body.dataset.bsTheme);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const theme = localStorage.getItem('theme') || 'light';
+            document.body.dataset.bsTheme = theme;
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(() => console.log('Service Worker registered'))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            }
+            loginForm.classList.add('needs-validation');
+        });
+    </script>
+</body>
+</html>

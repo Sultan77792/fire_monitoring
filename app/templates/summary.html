@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="{{ lang.get('lang', 'ru') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ lang.summary }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha256-JW3jO3zG7G6wGXFj55DqQvpesC4AZXCTv0F+Cs=" crossorigin="anonymous"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <style>
+        .summary-table, .chart-container { max-width: 1000px; margin: 20px auto; }
+        .table th, .table td { vertical-align: middle; }
+        .sortable { cursor: pointer; }
+        .sortable:hover { background-color: #e9ecef; }
+        #notifications { position: fixed; bottom: 10px; right: 10px; z-index: 1000; }
+        .card { margin: 10px 0; }
+        .spinner { display: none; margin-left: 10px; }
+        @media (max-width: 768px) {
+            .summary-table, .chart-container { font-size: 14px; max-width: 100%; overflow-x: auto; display: block; }
+            h2 { font-size: 1.5rem; }
+            .btn { font-size: 0.9rem; }
+            .card { font-size: 14px; }
+        }
+    </style>
+</head>
+<body class="bg-light" data-bs-theme="light">
+    <div class="container mt-4">
+        <h2>{{ lang.summary }}</h2>
+        <nav class="mb-3">
+            <button onclick="logout()" class="btn btn-outline-danger">{{ lang.logout }}</button>
+            <a href="/fires" class="btn btn-outline-primary">{{ lang.fires_title }}</a>
+            <a href="/analytics" class="btn btn-outline-info">{{ lang.analytics }}</a>
+            <a href="/users" class="btn btn-outline-info">{{ lang.users }}</a>
+            <a href="/api/export" class="btn btn-outline-success">{{ lang.export_csv }}</a>
+            <a href="#" id="exportPdf" class="btn btn-outline-success d-flex align-items-center">
+                {{ lang.export_pdf }}
+                <span class="spinner-border spinner-border-sm spinner" role="status" aria-hidden="true"></span>
+            </a>
+            <a href="?lang=ru" class="btn btn-outline-primary">Русский</a>
+            <a href="?lang=kk" class="btn btn-outline-primary">Қазақша</a>
+            <button class="btn btn-outline-secondary" onclick="toggleTheme()">{{ 'Темная тема' if lang.lang == 'ru' else 'Қараңғы тақырып' }}</button>
+        </nav>
+
+        <div class="row mb-4">
+            <div class="col-md-6 mb-2">
+                <input type="number" id="yearFilter" class="form-control" placeholder="{{ lang.year_filter }}" min="2000" max="{{ 'now'|datetimeformat('%Y') }}">
+            </div>
+            <div class="col-md-6 mb-2">
+                <select id="monthFilter" class="form-select">
+                    <option value="">{{ lang.all_months }}</option>
+                    <option value="1">{{ 'Январь' if lang.lang == 'ru' else 'Қаңтар' }}</option>
+                    <option value="2">{{ 'Февраль' if lang.lang == 'ru' else 'Ақпан' }}</option>
+                    <option value="3">{{ 'Март' if lang.lang == 'ru' else 'Наурыз' }}</option>
+                    <option value="4">{{ 'Апрель' if lang.lang == 'ru' else 'Сәуір' }}</option>
+                    <option value="5">{{ 'Май' if lang.lang == 'ru' else 'Мамыр' }}</option>
+                    <option value="6">{{ 'Июнь' if lang.lang == 'ru' else 'Маусым' }}</option>
+                    <option value="7">{{ 'Июль' if lang.lang == 'ru' else 'Шілде' }}</option>
+                    <option value="8">{{ 'Август' if lang.lang == 'ru' else 'Тамыз' }}</option>
+                    <option value="9">{{ 'Сентябрь' if lang.lang == 'ru' else 'Қыркүйек' }}</option>
+                    <option value="10">{{ 'Октябрь' if lang.lang == 'ru' else 'Қазан' }}</option>
+                    <option value="11">{{ 'Ноябрь' if lang.lang == 'ru' else 'Қараша' }}</option>
+                    <option value="12">{{ 'Декабрь' if lang.lang == 'ru' else 'Желтоқсан' }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">{{ lang.total_fires }}</div>
+                    <div class="card-body">
+                        <h3 id="totalFires">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">{{ lang.total_area }}</div>
+                    <div class="card-body">
+                        <h3 id="totalArea">0 {{ 'га' if lang.lang == 'ru' else 'га' }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">{{ lang.total_damage }}</div>
+                    <div class="card-body">
+                        <h3 id="totalDamage">0 {{ 'тенге' if lang.lang == 'ru' else 'теңге' }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="regionsChart"></canvas>
+        </div>
+
+        <div class="summary-table table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-key="region">{{ lang.region }}</th>
+                        <th class="sortable" data-key="count">{{ lang.count }}</th>
+                        <th class="sortable" data-key="total_area">{{ lang.total_area }}</th>
+                        <th class="sortable" data-key="total_damage">{{ lang.total_damage }}</th>
+                        <th class="sortable" data-key="forces_count">{{ lang.forces_count }}</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryTable"></tbody>
+                <tfoot>
+                    <tr class="table-info">
+                        <td>{{ 'Итого' if lang.lang == 'ru' else 'Барлығы' }}</td>
+                        <td id="footerCount">0</td>
+                        <td id="footerArea">0 {{ 'га' if lang.lang == 'ru' else 'га' }}</td>
+                        <td id="footerDamage">0 {{ 'тенге' if lang.lang == 'ru' else 'теңге' }}</td>
+                        <td id="footerForces">0</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="text-center">
+            <h4>{{ lang.users_count }}: <span id="usersCount">0</span></h4>
+        </div>
+    </div>
+
+    <div id="notifications"></div>
+
+    <script>
+        'use strict';
+
+        const socket = io();
+        let summaryData = [];
+        let regionsChart;
+        const lang = '{{ lang.lang }}';
+
+        async function loadSummary() {
+            const year = document.getElementById('yearFilter').value;
+            const month = document.getElementById('monthFilter').value;
+            let url = '/api/summary';
+            if (year || month) url += `?${year ? 'year=' + year : ''}${month ? (year ? '&' : '') + 'month=' + month : ''}`;
+            try {
+                const response = await fetch(url, { credentials: 'include' });
+                if (!response.ok) {
+                    if (response.status === 401) window.location.href = '/';
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Network response was not ok');
+                }
+                const data = await response.json();
+                summaryData = data.regions;
+                renderSummary(data);
+            } catch (error) {
+                console.error('Error loading summary:', error);
+                showNotification('danger', lang === 'ru' ? `Ошибка загрузки сводки: ${error.message}` : `Жинақ деректерді жүктеу қатесі: ${error.message}`);
+            }
+        }
+
+        function renderSummary(data) {
+            const totalFires = data.regions.reduce((sum, r) => sum + r.count, 0);
+            const totalArea = data.regions.reduce((sum, r) => sum + r.total_area, 0);
+            const totalDamage = data.regions.reduce((sum, r) => sum + r.total_damage, 0);
+            const totalForces = data.regions.reduce((sum, r) => sum + r.forces_count, 0);
+
+            document.getElementById('totalFires').textContent = totalFires.toLocaleString();
+            document.getElementById('totalArea').textContent = `${totalArea.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {{ 'га' if lang == 'ru' else 'га' }}`;
+            document.getElementById('totalDamage').textContent = `${totalDamage.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {{ 'тенге' if lang == 'ru' else 'теңге' }}`;
+            document.getElementById('usersCount').textContent = data.users_count.toLocaleString();
+
+            document.getElementById('footerCount').textContent = totalFires.toLocaleString();
+            document.getElementById('footerArea').textContent = `${totalArea.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {{ 'га' if lang == 'ru' else 'га' }}`;
+            document.getElementById('footerDamage').textContent = `${totalDamage.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {{ 'тенге' if lang == 'ru' else 'теңге' }}`;
+            document.getElementById('footerForces').textContent = totalForces.toLocaleString();
+
+            renderTable(summaryData);
+            updateChart(data.regions);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('summaryTable');
+            tbody.innerHTML = '';
+            data.forEach(region => {
+                const row = `<tr>
+                    <td>${region.region}</td>
+                    <td>${region.count.toLocaleString()}</td>
+                    <td>${region.total_area.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {{ 'га' if lang == 'ru' else 'га' }}</td>
+                    <td>${region.total_damage.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {{ 'тенге' if lang == 'ru' else 'теңге' }}</td>
+                    <td>${region.forces_count.toLocaleString()}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function updateChart(regions) {
+            const ctx = document.getElementById('regionsChart').getContext('2d');
+            if (regionsChart) regionsChart.destroy();
+            regionsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: regions.map(r => r.region),
+                    datasets: [
+                        {
+                            label: lang === 'ru' ? 'Количество пожаров' : 'Өрт саны',
+                            data: regions.map(r => r.count),
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: lang === 'ru' ? 'Площадь (га)' : 'Аумағы (га)',
+                            data: regions.map(r => r.total_area),
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true, position: 'left', title: { display: true, text: lang === 'ru' ? 'Количество' : 'Саны' } },
+                        y1: { beginAtZero: true, position: 'right', title: { display: true, text: lang === 'ru' ? 'Площадь (га)' : 'Аумағы (га)' }, grid: { drawOnChartArea: false } }
+                    },
+                    plugins: {
+                        title: { display: true, text: lang === 'ru' ? 'Сводка по регионам' : 'Аймақтар бойынша жиынтық' },
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+        }
+
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const key = th.dataset.key;
+                const order = th.dataset.order = th.dataset.order === 'asc' ? 'desc' : 'asc';
+                summaryData.sort((a, b) => {
+                    let valA = a[key];
+                    let valB = b[key];
+                    if (key === 'region') {
+                        valA = valA || '';
+                        valB = valB || '';
+                        return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    }
+                    valA = Number(valA) || 0;
+                    valB = Number(valB) || 0;
+                    return order === 'asc' ? (valA - valB) : (valB - valA);
+                });
+                renderTable(summaryData);
+            });
+        });
+
+        document.getElementById('exportPdf').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const spinner = e.target.querySelector('.spinner');
+            spinner.style.display = 'inline-block';
+            const year = document.getElementById('yearFilter').value;
+            const month = document.getElementById('monthFilter').value;
+            let url = `/api/analytics/pdf?summary=true&lang=${lang}`;
+            if (year || month) url += `${year ? '&year=' + year : ''}${month ? (year ? '&' : '&') + 'month=' + month : ''}`;
+            try {
+                const response = await fetch(url, { credentials: 'include' });
+                if (!response.ok) {
+                    if (response.status === 401) window.location.href = '/';
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Export failed');
+                }
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `summary_${year || 'all'}_${month || 'all'}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(downloadUrl);
+            } catch (error) {
+                console.error('Error exporting PDF:', error);
+                showNotification('danger', lang === 'ru' ? `Ошибка экспорта в PDF: ${error.message}` : `PDF-ке экспорттау қатесі: ${error.message}`);
+            } finally {
+                spinner.style.display = 'none';
+            }
+        });
+
+        function showNotification(type, message) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show`;
+            notification.innerHTML = `${message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            document.getElementById('notifications').appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.dataset.bsTheme = body.dataset.bsTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', body.dataset.bsTheme);
+            updateChart(summaryData); // Обновляем график для адаптации к теме
+        }
+
+        async function logout() {
+            try {
+                await fetch('/logout', { method: 'POST', credentials: 'include' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+        }
+
+        document.getElementById('yearFilter').addEventListener('change', debounce(loadSummary, 300));
+        document.getElementById('monthFilter').addEventListener('change', loadSummary);
+
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        socket.on('new_fire', (data) => {
+            showNotification('info', data.message);
+            loadSummary();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const theme = localStorage.getItem('theme') || 'light';
+            document.body.dataset.bsTheme = theme;
+            if (!document.cookie.includes('token')) window.location.href = '/';
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(() => console.log('Service Worker registered'))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            }
+            loadSummary();
+        });
+    </script>
+</body>
+</html>

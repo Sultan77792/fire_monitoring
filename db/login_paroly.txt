@@ -1,0 +1,90 @@
+admin = aigul
+admin1 = Qaz12345
+
+'admin1', 'pbkdf2:sha256:600000$mPIUOVLWuKCy3gNL$b11ba252e9b3118a8499e9a00b43bc2827c1f58085dc71978e53b89336af70f1', 'admin', 'Не указан')
+--------------------------------------------------------------------------------------------------------
+operator1 = operatorAkm
+pbkdf2:sha256:600000$SbFc4YCKlVFhtBl3$429cb6bc718daa4e129e9eb1832d72380e06eb93961500aa8fa8a651c21be67b
+operator2 = oper2
+pbkdf2:sha256:600000$csAkZ5ASg25aijva$62e1620b1cffc9039d5772f65ba1a8e8c707cbf241fc95045ca1b3fcd1b1410f
+operator3 = operAt
+pbkdf2:sha256:600000$2BkjYFNl5V3KAAUA$cc7220dde417c86c980634fe2c1206c99a288e05904c721b3d7702fc06c2d217
+operator4 = operAla
+pbkdf2:sha256:600000$GB4ufViyoPPvl5vJ$329d6cda6e14a928f692bab6d60ce39d1485f1fb52fd7e12d22e25a189f7a642
+operator5 = operVKO
+pbkdf2:sha256:600000$RO3jUpz3IRPzJIJt$bd36e304dca8fc7a539c38d3df4bf6ab1d8be8ad41f910c1a9144213ac8f5777
+operator6 = operZKO
+pbkdf2:sha256:600000$9Fc2vKSOxgb9NwaY$f05a7847732675e6729b1f97a0f387b5e187b8b8a4b79b911f2c2d12e56db213
+operator7 = operKrg
+pbkdf2:sha256:600000$Xc9QQQYO2j9XAvw7$85f0e3cdd6d3862621fed32740eb5a11b61d20ce03d768ff88eaf6545877e897
+operator8 = operKst
+pbkdf2:sha256:600000$9NHDRhgnwcvdMWrq$719f8cbbd55f908ebf476c42a649fc52e506d697b8dc2dac348807edde6a169b
+operator9 = operKzl
+pbkdf2:sha256:600000$EFEF16E7Um9xhzhw$eb3289d21c1d0e3dc9ed616da71a21e4f468968653296864c54b64e1d001ceeb
+operator10 = operZmb
+pbkdf2:sha256:600000$d0gYXCXCDbOwHx0L$3e60707b231bf03b0ebf41a613795088d4adf4eb0b57421a9174fa7995a2903e
+operator11 = operMng
+pbkdf2:sha256:600000$n0sMXT8iaD47zF7W$096c3b2c47c89c8d2369da03db0584fb4905009ad92a7c595c437701b2bada95
+operator12 = operPvl
+pbkdf2:sha256:600000$ueJTNp4S5QzxVyHT$5fd9d81504d6efedb4f3364d2b776b3b79e79c0d7925c6b4cc0e563b81cafb65
+operator13 = operSKO
+pbkdf2:sha256:600000$jllGZoLg2K7t1sbI$80e1d50d636a66a2574ef807f329ea4136a24f2d9052c53e3111caf566d07c42
+operator14 = operTur
+pbkdf2:sha256:600000$n0BgtQoAeBIfrExK$0b690d3eb631061f1021711abd5af1cc82e622aa2f3a0c40bdb79bae528bfeb7
+operator15 = operAst
+pbkdf2:sha256:600000$USOjhtWQyuwcK6bK$272110ee94e1d2df52079d981ecd51e89cfa18aae64075c247f02a4e96ed2988
+operator16 = operAlm
+pbkdf2:sha256:600000$4AZuXof1u2soK1Ai$7d94d1d71de5e1996c0d6a3b676b1b697a199a906b9d2f025cdd15ffa5f0dc9d
+operator17 = operShm
+pbkdf2:sha256:600000$mUY4osD9O9qMDicw$912daeeb65549a8642652fcde7efd417200a820928b6ed32cce9ebd3e3078a90
+operator18 = operAb
+pbkdf2:sha256:600000$OD6SIccRQo6LTebC$ef67dd89e3d4edeca1406946f7bb14a9d58156dc0f2f03c2c951d00ee72587e3
+operator19 = operZht
+pbkdf2:sha256:600000$n1NhmQlYXdvLStc6$ebb883c2585701cc8aac398555374d6af4f302e85ffaade7ae8ce42d7807b520
+operator20 = operUlt
+pbkdf2:sha256:600000$fbV8wLf7ZN8rrlii$4354e34ff369ffacda5a1b7b8a225ba59e578e2554f81ccd935ff16703cf0873
+--------------------------------------------------------------------------------------------------------
+engineer1 = eng1 
+pbkdf2:sha256:600000$BTjMYI7JmU232ntZ$e429ed25738cb8a59209871398612f4322d8a58042bb7f63669af7db75f0196c
+engineer2 = eng2 
+pbkdf2:sha256:600000$xsyk1sUHIzuc3gzl$cc63743fd5aaef228022e3d2f0263ceda0a2f3a7f6992b29bf03a7a60f143357
+engineer3 = engAt
+pbkdf2:sha256:600000$FU93DK5SY90tQHl1$0a1b3c6126db44e6d874981340ac02de2994b5555db6c2a191ec0bab99a406d3
+engineer4 = engAla
+pbkdf2:sha256:600000$Q3THIJjju4mEFmbM$5b1e7340a07094652179be3401c14aa932d05f85df04d408ef572ea01f4c1bb3
+engineer5 = engVKO
+pbkdf2:sha256:600000$eJ6LEkwAmBLIrNSk$81a15ccf1c8e59961de77502d95ed28b9088a01b83c0195ad8ec25b2e3e6c5fe
+engineer6 = engZKO
+pbkdf2:sha256:600000$ox2qU4ZYY45ErWFx$889724c1efe7e77778b8ef3fdc0ac0806b76b1950a8fea68ed0e8e26609b8e04
+engineer7 = engKrg
+pbkdf2:sha256:600000$HAcv87iWVFqISxfg$90bb694ba8c393424b7bf6f3567cc045b8015c7b9d37419c064ca4904bc751e2
+engineer8 = engKst
+pbkdf2:sha256:600000$j2T4ntvgqJLzxObW$889a619c180b93290cca576f4da0a0acecfbd4bedd087878fb39c3e820687189
+engineer9 = engKyz
+pbkdf2:sha256:600000$QfouXA5HxcSQCg4Q$6e8c86152e637fd50ab2a51abfa10931b23391d713dc90e4e16dc4786c7cf8d9
+engineer10 = engZmb
+pbkdf2:sha256:600000$k1fQTlkkvXgXfKj7$129423b21f73a4426ca56fe37906f78993891c16e557ac8769017e85caf54569
+engineer11 = engMng
+pbkdf2:sha256:600000$bHafkZBVX0AhHdzR$2a406efbc71cd74b70ec1e0d5f1ead10dc21919ba4f4cb39fbb0e8f54ad3737b
+engineer12 = engPvl
+pbkdf2:sha256:600000$qHLC2zqGhb6fFgwb$d8929c7c6a97357ae7f695e6183d0cc45bb0131e2fe1b7f8d72363459886fcb6
+engineer13 = engSKO
+pbkdf2:sha256:600000$fyCXHAeG63q1bK5c$3dfed0e8b1c1eee6430853034386e08eaca0d23d10a33424d6f8c5b726805938
+engineer14 = engTur
+pbkdf2:sha256:600000$835Wf584bZ2v7DlK$7c7e8b91fc9929afb94931c42927d5a768f62dbb7d537491cabf33c85cf6f333
+engineer15 = engAst
+pbkdf2:sha256:600000$6VqkEl39uORweQOj$5c7084dfcf4c7a927b5f185bc7b29c4c12e4ed3530463297ec094d92188e9e00
+engineer16 = engAlm
+pbkdf2:sha256:600000$SrKBiBJmzJGIlNs1$68b61177cf330c881ed6daf7882be7d938a15084de53746991f4d5bf1e859125
+engineer17 = engShm
+pbkdf2:sha256:600000$gIe3b1i73aNTh6Q7$a4cc46ad92a48d043e1953e2426f32ba243854b4212ddcd3e9f0288ecefbd189
+engineer18 = engAb
+pbkdf2:sha256:600000$fbvRja8LRO9x2JRe$f03da1b68c98df3571029437b5f4d0ac142042a4cf33eb270c1f66b985f6a2dd
+engineer19 = engZht
+pbkdf2:sha256:600000$AhdU9Z6QlkA2pOjJ$86c0de7473249161aae580d9c617033dc922c8252f0f8dfb8f0a02063e688c6f
+engineer20 = engUlt
+pbkdf2:sha256:600000$DwkZYaZGjgXjmUfU$cc4050e19f12f24929930c820b89b11b884645dbd8c428e096b4fc4a88c61e3a
+--------------------------------------------------------------------------------------------------------
+analyst = qaz123
+pbkdf2:sha256:600000$cKuaqGL87ch74uKM$322c4d248d16664f2fd7b13b5285b00add07898270884d7ac998a0d4198a6bc0
+--------------------------------------------------------------------------------------------------------

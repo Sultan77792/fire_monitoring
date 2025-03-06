@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактирование данных о пожаре</title>
+    <style>
+        body {
+            background-image: url("{{ url_for('static', filename='images/forest.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        form {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: auto;
+            margin-top: 100px;
+        }
+        h1 {
+            text-align: center;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input[type="submit"], button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+        input[type="submit"]:hover, button:hover {
+            background-color: #45a049;
+        }
+        .text-danger {
+            color: red;
+            font-size: 0.9em;
+        }
+        .alert {
+            margin: 10px auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Редактировать данные о пожаре</h1>
+	{% include 'navbar.html' %}
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        
+        <label>Дата</label>
+        <input type="date" name="date" value="{{ fire.date }}" required>
+
+        <label>Регион</label>
+        <input type="text" name="region" value="{{ fire.region }}" required>
+
+        <label>КГУ/ООПТ</label>
+        <input type="text" name="location" value="{{ fire.location }}" required>
+
+        <label>Филиал</label>
+        <input type="text" name="branch" value="{{ fire.branch or '' }}">
+
+        <label>Лесничество</label>
+        <input type="text" name="forestry" value="{{ fire.forestry or '' }}">
+
+        <label>Квартал</label>
+        <input type="text" name="quarter" value="{{ fire.quarter or '' }}">
+
+        <label>Выдел</label>
+        <input type="text" name="allotment" value="{{ fire.allotment or '' }}">
+
+        <label>Площадь пожара</label>
+        <input type="number" name="damage_area" step="0.0001" value="{{ fire.damage_area or '' }}">
+
+        <label>Лесная площадь</label>
+        <input type="number" name="damage_les" step="0.0001" value="{{ fire.damage_les or '' }}">
+
+        <label>Лесная лесопокрытая площадь</label>
+        <input type="number" name="damage_les_lesopokryt" step="0.0001" value="{{ fire.damage_les_lesopokryt or '' }}">
+
+        <label>Верховая площадь</label>
+        <input type="number" name="damage_les_verh" step="0.0001" value="{{ fire.damage_les_verh or '' }}">
+
+        <label>Нелесная площадь</label>
+        <input type="number" name="damage_not_les" step="0.0001" value="{{ fire.damage_not_les or '' }}">
+		
+		<label>Лесная охрана</label>
+        <input type="checkbox" name="LO_flag" {% if fire.LO_flag %}checked{% endif %}>
+
+        <label>Количество людей Лесной охраны</label>
+        <input type="number" name="LO_people_count" value="{{ fire.LO_people_count or '' }}">
+		
+		<label>Количество техники Лесной охраны</label>
+        <input type="number" name="LO_tecnic_count" value="{{ fire.LO_tecnic_count or '' }}">
+
+        <label>АПС</label>
+        <input type="checkbox" name="APS_flag" {% if fire.APS_flag %}checked{% endif %}>
+
+        <label>Количество людей АПС</label>
+        <input type="number" name="APS_people_count" value="{{ fire.APS_people_count or '' }}">
+		
+		<label>Количество техники АПС</label>
+        <input type="number" name="APS_tecnic_count" value="{{ fire.APS_tecnic_count or '' }}">
+		
+		<label>Количество воздушных судов АПС</label>
+        <input type="number" name="APS_aircraft_count" value="{{ fire.APS_aircraft_count or '' }}">
+		
+		<label>МЧС</label>
+        <input type="checkbox" name="KPS_flag" {% if fire.KPS_flag %}checked{% endif %}>
+		
+		<label>Количество людей МЧС</label>
+        <input type="number" name="KPS_people_count" value="{{ fire.KPS_people_count or '' }}">
+		
+		<label>Количество техники МЧС</label>
+        <input type="number" name="KPS_tecnic_count" value="{{ fire.KPS_tecnic_count or '' }}">
+		
+		<label>Количество воздушных судов МЧС</label>
+        <input type="number" name="KPS_aircraft_count" value="{{ fire.KPS_aircraft_count or '' }}">
+		
+		<label>МИО</label>
+        <input type="checkbox" name="MIO_flag" {% if fire.MIO_flag %}checked{% endif %}>
+		
+		<label>Количество людей МИО</label>
+        <input type="number" name="MIO_people_count" value="{{ fire.MIO_people_count or '' }}">
+		
+		<label>Количество техники МИО</label>
+        <input type="number" name="MIO_tecnic_count" value="{{ fire.MIO_tecnic_count or '' }}">
+		
+		<label>Количество воздушных судов МИО</label>
+        <input type="number" name="MIO_aircraft_count" value="{{ fire.MIO_aircraft_count or '' }}">
+		
+		<label>другие организации</label>
+        <input type="checkbox" name="other_org_flag" {% if fire.other_org_flag %}checked{% endif %}>
+		
+		<label>Количество людей др. организаций</label>
+        <input type="number" name="other_org_people_count" value="{{ fire.other_org_people_count or '' }}">
+		
+		<label>Количество техники др. организаций</label>
+        <input type="number" name="other_org_tecnic_count" value="{{ fire.other_org_tecnic_count or '' }}">
+		
+		<label>Количество воздушных судов др. организаций</label>
+        <input type="number" name="other_org_aircraft_count" value="{{ fire.other_org_aircraft_count or '' }}">
+
+        <label>Описание</label>
+        <textarea name="description">{{ fire.description | e }}</textarea>
+		
+		<label>Ущерб (тенге)</label>
+        <input type="number" name="damage_tenge" value="{{ fire.damage_tenge or '' }}">
+		
+		<label>Затраты на тушение</label>
+        <input type="number" name="firefighting_costs" value="{{ fire.firefighting_costs or '' }}">
+		
+		<label>КПО</label>
+        <input type="number" name="KPO" value="{{ fire.KPO or '' }}">
+
+        <label>Загрузить файл</label>
+        <input type="file" name="file">
+
+        <button type="submit">Сохранить изменения</button>
+    </form>
+
+    <div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert">
+                    <ul>
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+</body>
+</html>
